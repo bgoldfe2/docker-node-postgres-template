@@ -6,8 +6,8 @@ const app = express();
 const port = 8080;
 
 const client = new Client({
-  password: "root",
-  user: "root",
+  password: "postgres",
+  user: "postgres",
   host: "postgres",
 });
 
@@ -33,15 +33,4 @@ app.get("/employees", async (req, res) => {
   app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`);
   });
-})();
-
-const myPromise = new Promise((resolve, reject) => {
-  setTimeout(() => {
-    resolve("foo");
-  }, 300);
-  reject("oops");
-});
-
-myPromise.then(() => {
-  console.log("hello");
-});
+})(); 

@@ -1,4 +1,9 @@
 version: '3.8'
+
+volumes:
+    postgres:
+    pgadmin:
+
 services:
   # These are the configurations for our Node app
   # When Docker Compose starts this container it will automatically
@@ -23,33 +28,56 @@ services:
   # Note the `postgres` name is important, in out Node app when we refer
   # to  `host: "postgres"` that value is mapped on the network to the 
   # address of this container.
-  postgres:
-    image: postgres:14.1-alpine
-    restart: always
-    environment:
+  #postgres:
+  #  image: postgres:14.1-alpine
+  #  restart: always
+  #  environment:
       # You can set the value of environment variables
       # in your docker-compose.yml file
       # Our Node app will use these to connect
       # to the database
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
-      - POSTGRES_DB=root
-    ports:
+   #   - POSTGRES_USER=postgres
+   #   - POSTGRES_PASSWORD=postgres
+   #   - POSTGRES_DB=postgres
+   # ports:
       # Standard port for PostgreSQL databases
-      - "5432:5432"
-    volumes:
+   #   - "5432:5432"
+   # volumes:
       # When the PostgresSQL container is started it will run any scripts
       # provided in the `docker-entrypoint-initdb.d` directory, this connects
       # our seed file to that directory so that it gets run
-      - ./database-seed.sql:/docker-entrypoint-initdb.d/database-seed.sql
+    #  - ./database-seed.sql:/docker-entrypoint-initdb.d/database-seed.sql
 
-  # PostgreSQL pgAdmin panel accessible at http://localhost:16543/
-  pgadmin-compose:
-    image: dpage/pgadmin4
+  postgres:
+    container_name: demo_postgres
+    image: "postgres:12"
     environment:
-      PGADMIN_DEFAULT_EMAIL: "placeholder@example.com"
-      PGADMIN_DEFAULT_PASSWORD: "fakepassword123!"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      PGDATA: "/data/postgres"
+    volumes:
+       - ./database-seed.sql:/docker-entrypoint-initdb.d/database-seed.sql
+       - postgres:/data/postgres
     ports:
-      - "16543:80"
-    depends_on:
-      - postgres
+      - "15432:5432"
+    restart: unless-stopped
+
+  # PostgreSQL pgAdmin panel accessible at http://localhost:15433/
+  pgadmin:
+    container_name: demo_pgadmin
+    image: "dpage/pgadmin4:4.24"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    volumes:
+       - pgadmin:/var/lib/pgadmin
+       - ./docker_pgadmin_servers.json:/pgadmin4/servers.json
+    ports:
+      - "15433:80"
+    entrypoint:
+      - "/bin/sh"
+      - "-c"
+      - "/bin/echo 'postgres:5432:*:postgres:password' > /tmp/pgpassfile && chmod 600 /tmp/pgpassfile && /entrypoint.sh"
+    restart: unless-stopped
